@@ -1,0 +1,9 @@
+kebni_driver_node:
+  ros__parameters:
+    serial_port: "/dev/ttyUSB0"
+    configurationString: "o0002s484204214224230000010020030100110120130200210220230300310320330400410420430500510520533103113123133203213223233303313323333403413423434C04C14C24C34D04D14D24D34E04E14E24E34F04F14F24F35905915925935A05A15A25A35B05B15B25B3X"
+    baud_rate: 460800
+    frame_id_sensor: "kebni_sensor"
+    frame_id_ned: "ned"
+    frame_id_ecef: "ecef"
+    frame_id_gps: "gps"
