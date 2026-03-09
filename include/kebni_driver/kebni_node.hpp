@@ -20,7 +20,7 @@
 #include <std_msgs/msg/u_int8.hpp>
 #include <thread>
 
-#include "kebni_driver/kebni_driver.hpp"
+#include "sensaition_parser/kebni_driver.hpp"
 
 class KebniNode : public rclcpp::Node, public kebni::KebniDriver {
   public:

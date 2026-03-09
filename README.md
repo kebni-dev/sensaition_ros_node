@@ -2,6 +2,8 @@
 
 ROS 2 driver for the **Kebni SensAItion** IMU/INS sensor. Reads binary data over a serial port, decodes all sensor values defined in Table 53 of the SensAItion User Manual (D0000447), and publishes them as standard ROS 2 messages.
 
+It uses the Kebni SensAItion parser code as a submodule.
+
 ## Before Building
 
 ### 1. Identify the serial port
