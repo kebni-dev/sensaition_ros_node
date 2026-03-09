@@ -1,0 +1,4 @@
+[submodule "external/sensaition_parser"]
+	path = external/sensaition_parser
+	url = git@github.com:kebni-dev/sensaition_parser.git
+	branch = main
