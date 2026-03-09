@@ -17,15 +17,15 @@ find_package(std_msgs REQUIRED)
 include_directories(include)
 add_subdirectory(external/sensaition_parser)
 
-add_executable(kebni_driver
+add_executable(kebni_driver_node
   src/kebni_node.cpp
 )
 
-target_link_libraries(kebni_driver
+target_link_libraries(kebni_driver_node
   Kebni::sensaition_parser
 )
 
-ament_target_dependencies(kebni_driver
+ament_target_dependencies(kebni_driver_node
   rclcpp
   geometry_msgs
   sensor_msgs
@@ -34,7 +34,7 @@ ament_target_dependencies(kebni_driver
 
 install(TARGETS
   Kebni::sensaition_parser
-  kebni_driver
+  kebni_driver_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
