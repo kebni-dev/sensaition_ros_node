@@ -5,7 +5,9 @@ ENV ROS_DISTRO=humble
 
 RUN apt-get update && apt-get install -y \
     build-essential \
+    gdb \
     cmake \
+    libboost-test-dev \
     libboost-system-dev \
     && rm -rf /var/lib/apt/lists/*
 

@@ -29,7 +29,7 @@ serial_port: "/dev/ttyUSB{PORT_NUMBER}"
 Navigate to the project folder:
 
 ```bash
-cd kebni_driver
+cd sensaition_ros_node
 ```
 
 Build the Docker image:
@@ -55,7 +55,7 @@ colcon build
 Navigate to the project folder:
 
 ```bash
-cd kebni_driver
+cd sensaition_ros_node
 ```
 
 Run a Docker container with the project mounted:
@@ -76,12 +76,16 @@ Inside the container, source the build and launch the driver:
 source install/setup.bash && ros2 launch kebni_driver kebni_driver.launch.py
 ```
 
+> **Hint:** In case of issues accessing the ttyUSB device in docker, you may need the option "--group-add dialout" (together with the --device option). The command "ls -l /dev/ttyUSB0" shows what group owns the device (e.g. dialout). To actually join the group, do "sudo usermod -aG dialout $USER" before running docker.
+
+> **Hint:** On Windows/WSL, to make the serial port available in WSL, you may need to do the following in an elevated (administrator) power shell: Install usbipd: "winget install usbipd", then do "usbipd list", look for "USB Serial Converter" to get the bus-id, e.g. "1-2". Now share the device with "usbipd bind --busid 1-2", attach it with "usbipd attach --busid 1-2 --wsl". The command "usbipd detach -a" makes the device usable in Windows again.
+
 ## Testing
 
 Navigate to the project folder:
 
 ```bash
-cd kebni_driver
+cd sensaition_ros_node
 ```
 
 Run a Docker container with the project mounted:
@@ -192,11 +196,12 @@ All message header timestamps use `system_time_ms` from the sensor when availabl
 | ECEF Position (X/Y/Z) | 0x59-0x5B | m |
 | Quality Metrics | 0x61-0x69 | m, m/s, rad |
 
-## Measurements Struct
+## Sensaition parser library
 
-All decoded sensor values are stored in the `Measurements` struct. Each field is `std::optional` — only fields present in the configured output are populated.
+All sensor values are parsed by class `SensorDataBackend`, decoded and made available through class `SensorSample`.
+The enum `SensorSample::MeasurementType` is used to check if `SensorSample` contains a value and to get the value.
 
-### Standard Fields (`std::optional<double>`)
+### Standard Fields (`double`)
 
 | Field | ID | SI Unit | Description |
 |-------|----|---------|-------------|
@@ -242,7 +247,7 @@ All decoded sensor values are stored in the `Measurements` struct. Each field is
 | `quality_vertical_speed` | 0x66 | m/s | Vertical speed quality |
 | `quality_roll`, `quality_pitch`, `quality_heading` | 0x67-0x69 | rad | Angle quality |
 
-### Special-Case Fields (`std::optional<double>`)
+### Special-Case Fields (`double`)
 
 | Field | ID | Unit | Description |
 |-------|----|------|-------------|

@@ -19,7 +19,13 @@ add_subdirectory(external/sensaition_parser)
 
 add_executable(kebni_driver_node
   src/kebni_node.cpp
+  src/kebni_node_entry.cpp
 )
+
+include(CTest)
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif()
 
 target_link_libraries(kebni_driver_node
   Kebni::sensaition_parser
@@ -33,7 +39,7 @@ ament_target_dependencies(kebni_driver_node
 )
 
 install(TARGETS
-  Kebni::sensaition_parser
+  sensaition_parser
   kebni_driver_node
   DESTINATION lib/${PROJECT_NAME}
 )

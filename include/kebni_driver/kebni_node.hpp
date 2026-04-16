@@ -1,7 +1,9 @@
 #pragma once
 
 #include <atomic>
+#include <mutex>
 #include <boost/asio.hpp>
+#include <boost/asio/serial_port.hpp>
 #include <geometry_msgs/msg/point_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
@@ -20,14 +22,15 @@
 #include <std_msgs/msg/u_int8.hpp>
 #include <thread>
 
-#include "sensaition_parser/kebni_driver.hpp"
+#include "sensaition_parser/packet_assembler.hpp"
+#include "sensaition_parser/sensor_data_backend.hpp"
 
-class KebniNode : public rclcpp::Node, public kebni::KebniDriver {
+class KebniNode : public rclcpp::Node, public sepa::PacketProcessor {
   public:
     KebniNode();
     ~KebniNode();
 
-    void onMeasurements(const kebni::Measurements &measurements) override;
+    void processPacket(std::vector<std::uint8_t>& data) override; // PacketProcessor
 
   private:
     rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr pose_pub_;
@@ -58,34 +61,45 @@ class KebniNode : public rclcpp::Node, public kebni::KebniDriver {
     void createPublishers();
     void startSerial(const std::string &port, int baudRate);
     void serialThread();
+    void readCompletionHandler(const boost::system::error_code& error, std::size_t bytesTransferred);
 
-    void publishEcefPose(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishImu(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishVelocity(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishNavSatFix(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishRpy(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishMagnetometer(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishPressure(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishTemperature(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishCalibratedTemperature(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishInclinometer(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishCorrectedImu(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishOdometer(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishGnssFixedRelpos(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishGnssMovingRelpos(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishErrorFlags(const kebni::Measurements &m);
-    void publishSensorValid(const kebni::Measurements &m);
-    void publishAlignmentStatus(const kebni::Measurements &m);
-    void publishAttitudeStatus(const kebni::Measurements &m);
-    void publishGnssSatCounts(const kebni::Measurements &m);
-    void publishUtcTime(const kebni::Measurements &m, const builtin_interfaces::msg::Time &t);
-    void publishRotationMatrix(const kebni::Measurements &m);
-    void publishSystemTime(const kebni::Measurements &m);
+    using Sample = sepa::SensorSample;
+    using Measurement = sepa::SensorSample::MeasurementType;
+
+    void publishEcefPose(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishImu(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishVelocity(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    bool isGnssFixed(const Sample& sample, Measurement measurement); // publishNavSatFix helper
+    void publishNavSatFix(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishRpy(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishMagnetometer(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishPressure(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishTemperature(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishCalibratedTemperature(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishInclinometer(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishCorrectedImu(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishOdometer(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishGnssFixedRelpos(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishGnssMovingRelpos(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishErrorFlags(const Sample& sample);
+    void publishSensorValid(const Sample& sample);
+    void publishAlignmentStatus(const Sample& sample);
+    void publishAttitudeStatus(const Sample& sample);
+    void publishGnssSatCounts(const Sample& sample);
+
+    void publishUtcTime(const Sample& sample, const builtin_interfaces::msg::Time &t);
+    void publishRotationMatrix(const Sample& sample);
+    void publishSystemTime(const Sample& sample);
+
+    void printConfiguration(const std::string& confError) const;
+
+    sepa::PacketAssembler packetAssembler_;
+    sepa::SensorDataBackend backend_;
+    sepa::DataUartParseInfo parseInfo_;
+    sepa::DataSelection configuration_;
 
     std::unique_ptr<boost::asio::serial_port> serial_;
     std::unique_ptr<boost::asio::io_context> io_;
-    std::atomic<bool> running_{true};
-    kebni::Configuration configuration;
     std::thread serial_thread_;
     std::string serial_port_;
     int baud_rate_;
